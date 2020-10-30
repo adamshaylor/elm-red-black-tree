@@ -1,82 +1,58 @@
-module RedBlackTree exposing (empty, singleton, member, insert)
+module RedBlackTree exposing (singleton, member, insert)
 
 type Color
   = Red
   | Black
-  
-type Branch comparable
-  = Leaf
-  | LeftBranch (Node comparable)
-  | RightBranch (Node comparable)
-  | LeftRightBranch (Node comparable) (Node comparable)
 
-type Node comparable
-  = Node Color comparable (Branch comparable)
+type Tree comparable
+  = Empty
+  | Node Color (Tree comparable) comparable (Tree comparable)
 
-type RedBlackTree comparable
-  = EmptyTree
-  | NonEmptyTree (Node comparable)
+empty : Tree comparable
+empty = Empty
 
-empty : RedBlackTree comparable
-empty = EmptyTree
+singleton : comparable -> Tree comparable
+singleton value = Node Black Empty value Empty
 
-singleton : comparable -> RedBlackTree comparable
-singleton value = NonEmptyTree (Node Black value Leaf)
-
-memberOfNode : comparable -> Node comparable -> Bool
-memberOfNode searchValue node =
-  let
-    (Node _ nodeValue branch) = node
-    searchComparison = compare searchValue nodeValue
-  in
-    case (searchComparison, branch) of
-      (EQ, _) -> True
-      (_, Leaf) -> False
-      (LT, (LeftBranch leftNode)) -> memberOfNode searchValue leftNode
-      (LT, (RightBranch _)) -> False
-      (LT, (LeftRightBranch leftNode _)) -> memberOfNode searchValue leftNode
-      (GT, (LeftBranch _)) -> False
-      (GT, (RightBranch rightNode)) -> memberOfNode searchValue rightNode
-      (GT, (LeftRightBranch _ rightNode)) -> memberOfNode searchValue rightNode
-
-member : comparable -> RedBlackTree comparable -> Bool
+member : comparable -> Tree comparable -> Bool
 member searchValue tree =
   case tree of
-    EmptyTree -> False
-    NonEmptyTree root -> memberOfNode searchValue root
+    Empty ->
+      False
+    (Node _ left nodeValue right) ->
+      case compare searchValue nodeValue of
+        EQ -> True
+        LT -> member searchValue left
+        GT -> member searchValue right
 
-redLeafNode : comparable -> Node comparable
-redLeafNode value = Node Red value Leaf
-
-insertIntoNode : comparable -> Node comparable -> Node comparable
-insertIntoNode newValue targetNode =
+insert : comparable -> Tree comparable -> Tree comparable
+insert newValue tree =
   let
-    (Node c v targetBranch) = targetNode
-    searchComparison = compare newValue v
+    ins subtree =
+      case subtree of
+        Empty ->
+          Node Red Empty newValue Empty
+        Node color left nodeValue right ->
+          case compare newValue nodeValue of
+            LT -> balance (Node color (ins left) nodeValue right)
+            EQ -> subtree
+            GT -> balance (Node color left nodeValue (ins right))
   in
-    case (searchComparison, targetBranch) of
-      (EQ, _) ->
-        targetNode
-      (LT, Leaf) ->
-        Node c v (LeftBranch (redLeafNode newValue))
-      (LT, LeftBranch leftNode) ->
-        Node c v (LeftBranch (insertIntoNode newValue leftNode))
-      (LT, RightBranch rightNode) ->
-        Node c v (LeftRightBranch (redLeafNode newValue) rightNode)
-      (LT, LeftRightBranch leftNode rightNode) ->
-        Node c v (LeftRightBranch (insertIntoNode newValue leftNode) rightNode)
-      (GT, Leaf) ->
-        Node c v (RightBranch (redLeafNode newValue))
-      (GT, LeftBranch leftNode) ->
-        Node c v (LeftRightBranch leftNode (redLeafNode newValue))
-      (GT, RightBranch rightNode) ->
-        Node c v (RightBranch (insertIntoNode newValue rightNode))
-      (GT, LeftRightBranch leftNode rightNode) ->
-        Node c v (LeftRightBranch leftNode (insertIntoNode newValue rightNode))
+    makeBlack (ins tree)
 
-insert : comparable -> RedBlackTree comparable -> RedBlackTree comparable
-insert newValue targetTree =
-  case targetTree of
-    EmptyTree -> singleton newValue
-    NonEmptyTree root -> NonEmptyTree
-      (insertIntoNode newValue root)
+makeBlack : Tree comparable -> Tree comparable
+makeBlack tree =
+  case tree of
+    Empty -> Empty
+    Node _ left value right -> Node Black left value right
+
+-- Adapted from https://www.cs.tufts.edu/~nr/cs257/archive/chris-okasaki/redblack99.pdf
+balance : Tree comparable -> Tree comparable
+balance tree =
+  case tree of
+    Empty -> Empty
+    Node Black (Node Red (Node Red a x b) y c) z d -> Node Red (Node Black a x b) y (Node Black c z d)
+    Node Black (Node Red a x (Node Red b y c)) z d -> Node Red (Node Black a x b) y (Node Black c z d)
+    Node Black a x (Node Red (Node Red b y c) z d) -> Node Red (Node Black a x b) y (Node Black c z d)
+    Node Black a x (Node Red b y (Node Red c z d)) -> Node Red (Node Black a x b) y (Node Black c z d)
+    Node color a x b -> Node color a x b
