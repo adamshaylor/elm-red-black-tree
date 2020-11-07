@@ -1,4 +1,4 @@
-module RedBlackTree exposing (singleton, member, insert)
+module RedBlackTree exposing (..)
 
 type Color
   = Red
