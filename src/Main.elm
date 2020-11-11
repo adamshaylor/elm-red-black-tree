@@ -179,9 +179,6 @@ svgSubTree rbTree =
       ++ (svgBranch RightBranch rightNode)
       ++ (svgNode color value)
 
-testTree : Tree Int
-testTree = RedBlackTree.insert 5 (RedBlackTree.insert 4 (RedBlackTree.insert 3 (RedBlackTree.insert 2 (RedBlackTree.singleton 1))))
-
 view : Model -> Html Msg
 view model =
   div
