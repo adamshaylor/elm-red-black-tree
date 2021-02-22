@@ -10,9 +10,9 @@ import Browser
 
 import Html exposing (Html, button, div, input)
 import Html.Attributes exposing (type_, value)
-import Html.Events exposing (onInput, onClick, onSubmit)
+import Html.Events exposing (onInput, onSubmit)
 
-import Svg exposing (Svg, svg, defs, marker, polygon, line, circle)
+import Svg exposing (Svg, svg, line, circle)
 import Svg.Attributes exposing
   ( width
   , height
@@ -109,7 +109,6 @@ svgNode colorType nodeValue =
       textColor = case colorType of
         Red -> "black"
         Black -> "white"
-      nodeText = String.fromInt nodeValue
   in
     [ circle
         [ cx "0"
